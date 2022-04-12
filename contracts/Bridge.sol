@@ -18,17 +18,23 @@ contract Bridge is ReentrancyGuard {
     event ValidatorAdded(address indexed validator);
     event ValidatorRemoved(address indexed validator);
 
-    event WrappedTokenAdded(address indexed wrappedToken);
-    event WrappedTokenRemoved(address indexed wrappedToken);
+    event SupportedWrappedTokenAdded(address indexed token);
+    event SupportedWrappedTokenRemoved(address indexed token);
 
-    uint256 public nonce = 0;
-    mapping(uint256 => bool) isNonceUsed;
+    event SupportedTokenAdded(address indexed token);
+    event SupportedTokenRemoved(address indexed token);
+
+    uint256 public nonce = 1;
 
     address[] public validators;
     mapping(address => bool) public isValidator;
     mapping(address => bool) hasValidatorAlreadySigned;
 
-    mapping(address => bool) public isWrappedToken;
+    mapping(address => bool) public isSupportedWrappedToken;
+    address[] public supportedWrappedTokens;
+    mapping(address => bool) public isSupportedToken;
+    address[] public supportedTokens;
+
     mapping(bytes32 => bool) public isTransferCompleted;
 
     // Address of the official WETH contract
@@ -48,16 +54,21 @@ contract Bridge is ReentrancyGuard {
         }
 
         WETHAddress = WETHAddress_;
+        isSupportedToken[WETHAddress] = true;
     }
 
-    function wrapAndTransferETH(string memory recipient) public payable nonReentrant {
+    function wrapAndTransferETH(string memory recipient)
+        public
+        payable
+        nonReentrant
+    {
         uint256 amount = msg.value;
 
         // normalize amount, we only want to handle 8 decimals maximum on Koinos
         uint256 normalizedAmount = normalizeAmount(amount, 18);
 
         require(
-            normalizedAmount >= 0,
+            normalizedAmount > 0,
             "normalizedAmount amount must be greater than 0"
         );
 
@@ -70,11 +81,7 @@ contract Bridge is ReentrancyGuard {
         // deposit into WETH
         WETH(WETHAddress).deposit{value: amount - dust}();
 
-        emit LogTokensLocked(
-            WETHAddress,
-            recipient,
-            normalizedAmount
-        );
+        emit LogTokensLocked(WETHAddress, recipient, normalizedAmount);
     }
 
     function transferTokens(
@@ -82,16 +89,21 @@ contract Bridge is ReentrancyGuard {
         uint256 amount,
         string memory recipient
     ) public nonReentrant {
+        require(
+            isSupportedWrappedToken[token] || isSupportedToken[token],
+            "token is not supported"
+        );
+
         // query tokens decimals
         (, bytes memory queriedDecimals) = token.staticcall(
             abi.encodeWithSignature("decimals()")
         );
         uint8 decimals = abi.decode(queriedDecimals, (uint8));
-        
+
         // don't deposit dust that can not be bridged due to the decimal shift
         amount = deNormalizeAmount(normalizeAmount(amount, decimals), decimals);
 
-        if (isWrappedToken[token]) {
+        if (isSupportedWrappedToken[token]) {
             SafeERC20.safeTransferFrom(
                 IERC20(token),
                 msg.sender,
@@ -128,40 +140,37 @@ contract Bridge is ReentrancyGuard {
         uint256 normalizedAmount = normalizeAmount(amount, decimals);
 
         require(
-            normalizedAmount >= 0,
+            normalizedAmount > 0,
             "normalizedAmount amount must be greater than 0"
         );
 
-        emit LogTokensLocked(
-            token,
-            recipient,
-            normalizedAmount
-        );
+        emit LogTokensLocked(token, recipient, normalizedAmount);
     }
 
     function completeTransfer(
         bytes memory txId,
+        uint256 operation,
         address token,
         address recipient,
         uint256 value,
         bytes[] memory signatures
-    ) public nonReentrant {
-        // hash is keccak256(transction id, token address, recipient address, value to transfer and address of bridge)
-        bytes32 hash = getEthereumMessageHash(
-            keccak256(
-                abi.encodePacked(txId, token, recipient, value, address(this))
-            )
+    ) external nonReentrant {
+        require(
+            isSupportedWrappedToken[token] || isSupportedToken[token],
+            "token is not supported"
         );
 
-        require(!isTransferCompleted[hash], "transfer already completed");
-        isTransferCompleted[hash] = true;
+        bytes32 messageHash = getEthereumMessageHash(
+            keccak256(abi.encodePacked(txId, operation, address(this)))
+        );
 
-        verifySignatures(signatures, hash);
+        require(!isTransferCompleted[messageHash], "transfer already completed");
+        isTransferCompleted[messageHash] = true;
 
-        IERC20 transferToken = IERC20(token);
+        verifySignatures(signatures, messageHash);
 
         // query decimals
-        (, bytes memory queriedDecimals) = address(transferToken).staticcall(
+        (, bytes memory queriedDecimals) = token.staticcall(
             abi.encodeWithSignature("decimals()")
         );
         uint8 decimals = abi.decode(queriedDecimals, (uint8));
@@ -170,52 +179,86 @@ contract Bridge is ReentrancyGuard {
         uint256 transferAmount = deNormalizeAmount(value, decimals);
 
         // transfer bridged amount to recipient
-        if (isWrappedToken[token]) {
+        if (isSupportedWrappedToken[token]) {
             // mint wrapped asset
-            WrappedToken(address(transferToken)).mint(recipient, value);
+            WrappedToken(token).mint(recipient, value);
         } else {
-            SafeERC20.safeTransfer(transferToken, recipient, transferAmount);
+            SafeERC20.safeTransfer(IERC20(token), recipient, transferAmount);
         }
     }
 
-    function addWrappedToken(bytes[] memory signatures, address wrappedToken)
+    function addSupportedToken(bytes[] memory signatures, address token)
         external
     {
-        require(!isNonceUsed[nonce], "Nonce already used");
-
         bytes32 messageHash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(wrappedToken, nonce, address(this)))
+            keccak256(abi.encodePacked(token, nonce, address(this)))
         );
 
         verifySignatures(signatures, messageHash);
 
-        isWrappedToken[wrappedToken] = true;
+        isSupportedToken[token] = true;
+        supportedTokens.push(token);
         nonce += 1;
 
-        emit WrappedTokenAdded(wrappedToken);
+        emit SupportedTokenAdded(token);
+        (token);
     }
 
-    function removeWrappedToken(bytes[] memory signatures, address wrappedToken)
+    function removeSupportedToken(bytes[] memory signatures, address token)
         external
     {
-        require(!isNonceUsed[nonce], "Nonce already used");
-
         bytes32 messageHash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(wrappedToken, nonce, address(this)))
+            keccak256(abi.encodePacked(token, nonce, address(this)))
         );
 
         verifySignatures(signatures, messageHash);
 
-        isWrappedToken[wrappedToken] = false;
+        isSupportedToken[token] = false;
+        for (uint256 i = 0; i < supportedTokens.length; i++) {
+            if (supportedTokens[i] == token) removeSupportedTokenByIndex(i);
+        }
         nonce += 1;
 
-        emit WrappedTokenRemoved(wrappedToken);
+        emit SupportedTokenRemoved(token);
+    }
+
+    function addSupportedWrappedToken(bytes[] memory signatures, address token)
+        external
+    {
+        bytes32 messageHash = getEthereumMessageHash(
+            keccak256(abi.encodePacked(token, nonce, address(this)))
+        );
+
+        verifySignatures(signatures, messageHash);
+
+        isSupportedWrappedToken[token] = true;
+        supportedWrappedTokens.push(token);
+        nonce += 1;
+
+        emit SupportedWrappedTokenAdded(token);
+    }
+
+    function removeWrappedToken(bytes[] memory signatures, address token)
+        external
+    {
+        bytes32 messageHash = getEthereumMessageHash(
+            keccak256(abi.encodePacked(token, nonce, address(this)))
+        );
+
+        verifySignatures(signatures, messageHash);
+
+        isSupportedWrappedToken[token] = false;
+        for (uint256 i = 0; i < supportedWrappedTokens.length; i++) {
+            if (supportedWrappedTokens[i] == token) removeSupportedWrappedTokenByIndex(i);
+        }
+        nonce += 1;
+
+        emit SupportedWrappedTokenRemoved(token);
     }
 
     function addValidator(bytes[] memory signatures, address newValidator)
         external
     {
-        require(!isNonceUsed[nonce], "Nonce already used");
         require(!isValidator[newValidator], "Validator already exists");
 
         bytes32 messageHash = getEthereumMessageHash(
@@ -235,8 +278,7 @@ contract Bridge is ReentrancyGuard {
         bytes[] memory signatures,
         address validatorAddress
     ) external {
-        require(!isNonceUsed[nonce], "Nonce already used");
-        require(isValidator[validatorAddress], "Validator does not exists");
+        require(isValidator[validatorAddress], "Validator does not exist");
 
         bytes32 hash = getEthereumMessageHash(
             keccak256(abi.encodePacked(validatorAddress, nonce, address(this)))
@@ -248,7 +290,7 @@ contract Bridge is ReentrancyGuard {
         nonce += 1;
 
         for (uint256 i = 0; i < validators.length; i++) {
-            if (validators[i] == validatorAddress) removeByIndex(i);
+            if (validators[i] == validatorAddress) removeValidatorByIndex(i);
         }
 
         emit ValidatorRemoved(validatorAddress);
@@ -258,7 +300,7 @@ contract Bridge is ReentrancyGuard {
         internal
     {
         require(
-            (((validators.length * 10) / 3) * 2) / 10 + 1 > signatures.length,
+            signatures.length >= (((validators.length * 10) / 3) * 2) / 10 + 1,
             "quorum not met"
         );
 
@@ -348,13 +390,39 @@ contract Bridge is ReentrancyGuard {
         return amount;
     }
 
-    function removeByIndex(uint256 index) internal {
+    function removeSupportedTokenByIndex(uint256 index) internal {
+        require(index < supportedTokens.length, "index out of bound");
+
+        for (uint256 i = index; i < supportedTokens.length - 1; i++) {
+            supportedTokens[i] = supportedTokens[i + 1];
+        }
+        supportedTokens.pop();
+    }
+
+    function removeSupportedWrappedTokenByIndex(uint256 index) internal {
+        require(index < supportedWrappedTokens.length, "index out of bound");
+
+        for (uint256 i = index; i < supportedWrappedTokens.length - 1; i++) {
+            supportedWrappedTokens[i] = supportedWrappedTokens[i + 1];
+        }
+        supportedWrappedTokens.pop();
+    }
+
+    function removeValidatorByIndex(uint256 index) internal {
         require(index < validators.length, "index out of bound");
 
         for (uint256 i = index; i < validators.length - 1; i++) {
             validators[i] = validators[i + 1];
         }
         validators.pop();
+    }
+
+    function getSupportedTokensLength() public view returns (uint256) {
+        return supportedTokens.length;
+    }
+
+    function getSupportedWrappedTokensLength() public view returns (uint256) {
+        return supportedWrappedTokens.length;
     }
 
     function getValidatorsLength() public view returns (uint256) {
