@@ -1,15 +1,8 @@
-# Basic Sample Hardhat Project
+![Test](https://github.com/roaminroe/koinos-bridge-ethereum/actions/workflows/test.yml/badge.svg)
+# koinos-bridge-ethereum
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, a sample script that deploys that contract, and an example of a task implementation, which simply lists the available accounts.
+Non-custodial multi-sig bridge for the Koinos blockchain
 
-Try running some of the following tasks:
-
-```shell
-npx hardhat accounts
-npx hardhat compile
-npx hardhat clean
-npx hardhat test
-npx hardhat node
-node scripts/sample-script.js
-npx hardhat help
-```
+Heavily inpired by the following repos:
+https://github.com/fbslo/validator-contracts: multi-sig mechanic
+https://github.com/certusone/wormhole: bridging methods
