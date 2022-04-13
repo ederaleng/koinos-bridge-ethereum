@@ -58,7 +58,7 @@ contract Bridge is ReentrancyGuard {
     }
 
     function wrapAndTransferETH(string memory recipient)
-        public
+        external
         payable
         nonReentrant
     {
@@ -88,7 +88,7 @@ contract Bridge is ReentrancyGuard {
         address token,
         uint256 amount,
         string memory recipient
-    ) public nonReentrant {
+    ) external nonReentrant {
         require(
             isSupportedWrappedToken[token] || isSupportedToken[token],
             "token is not supported"
@@ -149,7 +149,7 @@ contract Bridge is ReentrancyGuard {
 
     function completeTransfer(
         bytes memory txId,
-        uint256 operation,
+        uint256 operationId,
         address token,
         address recipient,
         uint256 value,
@@ -161,7 +161,7 @@ contract Bridge is ReentrancyGuard {
         );
 
         bytes32 messageHash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(txId, operation, token, recipient, value, address(this)))
+            keccak256(abi.encodePacked(txId, operationId, token, recipient, value, address(this)))
         );
 
         require(!isTransferCompleted[messageHash], "transfer already completed");
@@ -238,7 +238,7 @@ contract Bridge is ReentrancyGuard {
         emit SupportedWrappedTokenAdded(token);
     }
 
-    function removeWrappedToken(bytes[] memory signatures, address token)
+    function removeSupportedWrappedToken(bytes[] memory signatures, address token)
         external
     {
         bytes32 messageHash = getEthereumMessageHash(
@@ -356,7 +356,7 @@ contract Bridge is ReentrancyGuard {
     }
 
     function getEthereumMessageHash(bytes32 hash)
-        public
+        internal
         pure
         returns (bytes32)
     {

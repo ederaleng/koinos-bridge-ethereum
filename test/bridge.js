@@ -17,6 +17,16 @@ const testPrivateKeys = [
   '0x1016d0f886dc50b613c75207f188e9cc46aad1381f45bb92a45b0c889ad617e8'
 ]
 
+const addtlValidators = [
+  '0x6AAbb38d69B112Bd4Ed9c319206Ed3CA71f89eCB',
+  '0x2599f0F9eD95dFfbcE222eA32466cf0C0835E09A'
+]
+
+const addtlValidatorsPrivateKeys = [
+  '0xd2b100ba453e40218f8dda0e79bcf96aed6207bd952a62b94f7977fdf15c490b',
+  '0x73ad31769582c89e13c8b29a28d9a526a640c96e022000221150902cc8245b6c'
+]
+
 const koinosAddr1 = '1GE2JqXw5LMQaU1sj82Dy8ZEe2BRXQS1cs'
 
 const hashAndSign = async (...args) => {
@@ -150,7 +160,7 @@ describe('Bridge', function () {
   })
 
   // eslint-disable-next-line no-undef
-  it('should withdraw ERC20 tokens', async function () {
+  it('should transfer ERC20 tokens', async function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee898'
     let koinosTxIdOp = 1
 
@@ -177,7 +187,7 @@ describe('Bridge', function () {
   })
 
   // eslint-disable-next-line no-undef
-  it('should not withdraw ERC20 tokens', async function () {
+  it('should not transfer ERC20 tokens', async function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee898'
     let koinosTxIdOp = 1
 
@@ -225,7 +235,7 @@ describe('Bridge', function () {
   })
 
   // eslint-disable-next-line no-undef
-  it('should deposit Wrapped tokens', async function () {
+  it('should mint Wrapped tokens', async function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
     let koinosTxIdOp = 1
 
@@ -251,7 +261,7 @@ describe('Bridge', function () {
   })
 
   // eslint-disable-next-line no-undef
-  it('should not deposit Wrapped tokens', async function () {
+  it('should not mint Wrapped tokens', async function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
     let koinosTxIdOp = 2
 
@@ -267,5 +277,116 @@ describe('Bridge', function () {
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[3].address, '20000000', signatures)).to.be.revertedWith('invalid signatures')
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, 4, mockWrappedToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('invalid signatures')
     await expect(bridge.connect(accounts[10]).completeTransfer('0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0eE898', 4, mockWrappedToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('invalid signatures')
+  })
+
+  // eslint-disable-next-line no-undef
+  it('should remove support for ERC20 tokens', async function () {
+    let nonce = await bridge.nonce()
+
+    // remove support for the mockToken
+    let signatures = await hashAndSign(mockToken.address, nonce.toString(), bridge.address)
+
+    let tx = await bridge.connect(accounts[10]).removeSupportedToken(signatures, mockToken.address)
+    await tx.wait()
+
+    nonce = await bridge.nonce()
+
+    // remove support for the mockFeeToken
+    signatures = await hashAndSign(mockFeeToken.address, nonce.toString(), bridge.address)
+
+    tx = await bridge.connect(accounts[10]).removeSupportedToken(signatures, mockFeeToken.address)
+    await tx.wait()
+
+    expect(await bridge.getSupportedTokensLength()).to.equal(0)
+
+    const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
+    const koinosTxIdOp = 20
+
+    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockToken.address, accounts[7].address, '200000000', bridge.address)
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('token is not supported')
+
+    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockFeeToken.address, accounts[7].address, '200000000', bridge.address)
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockFeeToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('token is not supported')
+  })
+
+  // eslint-disable-next-line no-undef
+  it('should remove support for Wrapped tokens', async function () {
+    const nonce = await bridge.nonce()
+
+    // add support for the mockWrappedToken
+    let signatures = await hashAndSign(mockWrappedToken.address, nonce.toString(), bridge.address)
+
+    const tx = await bridge.connect(accounts[10]).removeSupportedWrappedToken(signatures, mockWrappedToken.address)
+    await tx.wait()
+
+    expect(await bridge.getSupportedWrappedTokensLength()).to.equal(0)
+
+    const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
+    const koinosTxIdOp = 20
+
+    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
+
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('token is not supported')
+  })
+
+  // eslint-disable-next-line no-undef
+  it('should add validators', async function () {
+    const initialValidatorsLength = await bridge.getValidatorsLength()
+
+    let nonce = await bridge.nonce()
+
+    // add support for the mockWrappedToken
+    let signatures = await hashAndSign(addtlValidators[0], nonce.toString(), bridge.address)
+
+    let tx = await bridge.connect(accounts[10]).addValidator(signatures, addtlValidators[0])
+    await tx.wait()
+
+    let newValidatorsLength = await bridge.getValidatorsLength()
+    expect(newValidatorsLength).to.equal(parseInt(initialValidatorsLength) + 1)
+    expect(await bridge.validators(newValidatorsLength - 1)).to.equal(addtlValidators[0])
+
+    nonce = await bridge.nonce()
+    signatures = await hashAndSign(addtlValidators[1], nonce.toString(), bridge.address)
+
+    tx = await bridge.connect(accounts[10]).addValidator(signatures, addtlValidators[1])
+    await tx.wait()
+
+    newValidatorsLength = await bridge.getValidatorsLength()
+    expect(newValidatorsLength).to.equal(parseInt(initialValidatorsLength) + 2)
+    expect(await bridge.validators(newValidatorsLength - 1)).to.equal(addtlValidators[1])
+  })
+
+  // eslint-disable-next-line no-undef
+  it('should remove validators', async function () {
+    const initialValidatorsLength = await bridge.getValidatorsLength()
+
+    let nonce = await bridge.nonce()
+
+    let signatures = await hashAndSign(addtlValidators[0], nonce.toString(), bridge.address)
+
+    // eslint-disable-next-line no-undef
+    const hash = await web3.utils.soliditySha3(addtlValidators[0], nonce.toString(), bridge.address)
+
+    const signature = await sigUtil.personalSign(ethers.utils.arrayify(addtlValidatorsPrivateKeys[1]), {
+      data: hash
+    })
+    signatures.push(signature)
+
+    let tx = await bridge.connect(accounts[10]).removeValidator(signatures, addtlValidators[0])
+    await tx.wait()
+
+    let newValidatorsLength = await bridge.getValidatorsLength()
+    expect(newValidatorsLength).to.equal(parseInt(initialValidatorsLength) - 1)
+    expect(await bridge.validators(newValidatorsLength - 1)).to.equal(addtlValidators[1])
+
+    nonce = await bridge.nonce()
+    signatures = await hashAndSign('0xc73280617F4daa107F8b2e0F4E75FA5b5239Cf24', nonce.toString(), bridge.address)
+
+    tx = await bridge.connect(accounts[10]).removeValidator(signatures, '0xc73280617F4daa107F8b2e0F4E75FA5b5239Cf24')
+    await tx.wait()
+
+    newValidatorsLength = await bridge.getValidatorsLength()
+    expect(newValidatorsLength).to.equal(parseInt(initialValidatorsLength) - 2)
+    expect(await bridge.validators(0)).to.equal('0x2b0e9EB31C3F3BC06437A7dF090a2f6a4D658150')
   })
 })
