@@ -125,15 +125,18 @@ describe('Bridge', function () {
     const nonce = await bridge.nonce()
 
     // add support for the mockToken
-    let signatures = await hashAndSign(mockToken.address, nonce.toString(), bridge.address)
+    let signatures = await hashAndSign(mockWrappedToken.address, nonce.toString(), bridge.address)
+
+    // Token already exists
+    await expect(bridge.connect(accounts[10]).addSupportedToken(signatures.slice(2, 2), mockToken.address)).to.be.revertedWith('Token already exists')
 
     // quorum not met
-    await expect(bridge.connect(accounts[10]).addSupportedToken(signatures.slice(2, 2), mockToken.address)).to.be.revertedWith('quorum not met')
+    await expect(bridge.connect(accounts[10]).addSupportedToken(signatures.slice(2, 2), mockWrappedToken.address)).to.be.revertedWith('quorum not met')
 
     // invalid nonce which should turn into an "invalid signatures" error
-    signatures = await hashAndSign(mockToken.address, '2', bridge.address)
+    signatures = await hashAndSign(mockWrappedToken.address, '2', bridge.address)
 
-    await expect(bridge.connect(accounts[10]).addSupportedToken(signatures, mockToken.address)).to.be.revertedWith('invalid signatures')
+    await expect(bridge.connect(accounts[10]).addSupportedToken(signatures, mockWrappedToken.address)).to.be.revertedWith('invalid signatures')
   })
 
   // eslint-disable-next-line no-undef
@@ -225,13 +228,16 @@ describe('Bridge', function () {
     // add support for the mockWrappedToken
     let signatures = await hashAndSign(mockWrappedToken.address, nonce.toString(), bridge.address)
 
+    // Token already exists
+    await expect(bridge.connect(accounts[10]).addSupportedWrappedToken(signatures.slice(2, 2), mockWrappedToken.address)).to.be.revertedWith('Token already exists')
+
     // quorum not met
-    await expect(bridge.connect(accounts[10]).addSupportedWrappedToken(signatures.slice(2, 2), mockWrappedToken.address)).to.be.revertedWith('quorum not met')
+    await expect(bridge.connect(accounts[10]).addSupportedWrappedToken(signatures.slice(2, 2), mockToken.address)).to.be.revertedWith('quorum not met')
 
     // invalid nonce which should turn into an "invalid signatures" error
-    signatures = await hashAndSign(mockWrappedToken.address, '2', bridge.address)
+    signatures = await hashAndSign(mockToken.address, '2', bridge.address)
 
-    await expect(bridge.connect(accounts[10]).addSupportedWrappedToken(signatures, mockWrappedToken.address)).to.be.revertedWith('invalid signatures')
+    await expect(bridge.connect(accounts[10]).addSupportedWrappedToken(signatures, mockToken.address)).to.be.revertedWith('invalid signatures')
   })
 
   // eslint-disable-next-line no-undef
@@ -327,6 +333,42 @@ describe('Bridge', function () {
     signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
 
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('token is not supported')
+  })
+
+  // eslint-disable-next-line no-undef
+  it('should pause the bridge', async function () {
+    const nonce = await bridge.nonce()
+
+    let signatures = await hashAndSign(true, nonce.toString(), bridge.address)
+
+    const tx = await bridge.connect(accounts[10]).pause(signatures)
+    await tx.wait()
+
+    const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
+    const koinosTxIdOp = 20
+
+    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
+
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('Bridge is paused')
+    await expect(bridge.connect(accounts[5]).transferTokens(accounts[10].address, '250000000000000000', koinosAddr1)).to.be.revertedWith('Bridge is paused')
+  })
+
+  // eslint-disable-next-line no-undef
+  it('should unpause the bridge', async function () {
+    const nonce = await bridge.nonce()
+
+    let signatures = await hashAndSign(false, nonce.toString(), bridge.address)
+
+    const tx = await bridge.connect(accounts[10]).unpause(signatures)
+    await tx.wait()
+
+    const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
+    const koinosTxIdOp = 20
+
+    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
+
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('token is not supported')
+    await expect(bridge.connect(accounts[5]).transferTokens(accounts[10].address, '250000000000000000', koinosAddr1)).to.be.revertedWith('token is not supported')
   })
 
   // eslint-disable-next-line no-undef

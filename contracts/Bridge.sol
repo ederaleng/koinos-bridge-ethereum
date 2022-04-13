@@ -37,6 +37,11 @@ contract Bridge is ReentrancyGuard {
 
     mapping(bytes32 => bool) public isTransferCompleted;
 
+    event Pause();
+    event Unpause();
+
+    bool public paused = false;
+
     // Address of the official WETH contract
     address public WETHAddress;
 
@@ -60,6 +65,7 @@ contract Bridge is ReentrancyGuard {
     function wrapAndTransferETH(string memory recipient)
         external
         payable
+        whenNotPaused
         nonReentrant
     {
         uint256 amount = msg.value;
@@ -88,7 +94,7 @@ contract Bridge is ReentrancyGuard {
         address token,
         uint256 amount,
         string memory recipient
-    ) external nonReentrant {
+    ) external whenNotPaused nonReentrant {
         require(
             isSupportedWrappedToken[token] || isSupportedToken[token],
             "token is not supported"
@@ -154,17 +160,29 @@ contract Bridge is ReentrancyGuard {
         address recipient,
         uint256 value,
         bytes[] memory signatures
-    ) external nonReentrant {
+    ) external whenNotPaused nonReentrant {
         require(
             isSupportedWrappedToken[token] || isSupportedToken[token],
             "token is not supported"
         );
 
         bytes32 messageHash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(txId, operationId, token, recipient, value, address(this)))
+            keccak256(
+                abi.encodePacked(
+                    txId,
+                    operationId,
+                    token,
+                    recipient,
+                    value,
+                    address(this)
+                )
+            )
         );
 
-        require(!isTransferCompleted[messageHash], "transfer already completed");
+        require(
+            !isTransferCompleted[messageHash],
+            "transfer already completed"
+        );
         isTransferCompleted[messageHash] = true;
 
         verifySignatures(signatures, messageHash);
@@ -190,6 +208,8 @@ contract Bridge is ReentrancyGuard {
     function addSupportedToken(bytes[] memory signatures, address token)
         external
     {
+        require(!isSupportedToken[token], "Token already exists");
+
         bytes32 messageHash = getEthereumMessageHash(
             keccak256(abi.encodePacked(token, nonce, address(this)))
         );
@@ -207,6 +227,8 @@ contract Bridge is ReentrancyGuard {
     function removeSupportedToken(bytes[] memory signatures, address token)
         external
     {
+        require(isSupportedToken[token], "Token does not exist");
+
         bytes32 messageHash = getEthereumMessageHash(
             keccak256(abi.encodePacked(token, nonce, address(this)))
         );
@@ -225,6 +247,8 @@ contract Bridge is ReentrancyGuard {
     function addSupportedWrappedToken(bytes[] memory signatures, address token)
         external
     {
+        require(!isSupportedWrappedToken[token], "Token already exists");
+
         bytes32 messageHash = getEthereumMessageHash(
             keccak256(abi.encodePacked(token, nonce, address(this)))
         );
@@ -238,9 +262,12 @@ contract Bridge is ReentrancyGuard {
         emit SupportedWrappedTokenAdded(token);
     }
 
-    function removeSupportedWrappedToken(bytes[] memory signatures, address token)
-        external
-    {
+    function removeSupportedWrappedToken(
+        bytes[] memory signatures,
+        address token
+    ) external {
+        require(isSupportedWrappedToken[token], "Token does not exist");
+
         bytes32 messageHash = getEthereumMessageHash(
             keccak256(abi.encodePacked(token, nonce, address(this)))
         );
@@ -249,7 +276,8 @@ contract Bridge is ReentrancyGuard {
 
         isSupportedWrappedToken[token] = false;
         for (uint256 i = 0; i < supportedWrappedTokens.length; i++) {
-            if (supportedWrappedTokens[i] == token) removeSupportedWrappedTokenByIndex(i);
+            if (supportedWrappedTokens[i] == token)
+                removeSupportedWrappedTokenByIndex(i);
         }
         nonce += 1;
 
@@ -427,6 +455,49 @@ contract Bridge is ReentrancyGuard {
 
     function getValidatorsLength() public view returns (uint256) {
         return validators.length;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is not paused.
+     */
+    modifier whenNotPaused() {
+        require(!paused, "Bridge is paused");
+        _;
+    }
+
+    /**
+     * @dev Modifier to make a function callable only when the contract is paused.
+     */
+    modifier whenPaused() {
+        require(paused, "Bridge is not paused");
+        _;
+    }
+
+    function pause(bytes[] memory signatures) public whenNotPaused {
+        bytes32 hash = getEthereumMessageHash(
+            keccak256(abi.encodePacked(true, nonce, address(this)))
+        );
+
+        verifySignatures(signatures, hash);
+
+        paused = true;
+        nonce += 1;
+
+        emit Pause();
+    }
+
+    function unpause(bytes[] memory signatures) public whenPaused {
+        bytes32 hash = getEthereumMessageHash(
+            keccak256(abi.encodePacked(false, nonce, address(this)))
+        );
+
+        verifySignatures(signatures, hash);
+
+        paused = true;
+        nonce += 1;
+        
+        paused = false;
+        emit Unpause();
     }
 
     fallback() external payable {
