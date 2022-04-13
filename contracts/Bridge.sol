@@ -161,7 +161,7 @@ contract Bridge is ReentrancyGuard {
         );
 
         bytes32 messageHash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(txId, operation, address(this)))
+            keccak256(abi.encodePacked(txId, operation, token, recipient, value, address(this)))
         );
 
         require(!isTransferCompleted[messageHash], "transfer already completed");

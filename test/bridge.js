@@ -154,7 +154,7 @@ describe('Bridge', function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee898'
     let koinosTxIdOp = 1
 
-    let signatures = await hashAndSign(koinosTxId, koinosTxIdOp, bridge.address)
+    let signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', bridge.address)
 
     expect(await mockToken.balanceOf(bridge.address)).to.equal('500000000000000000')
     // value is 8 decimals max
@@ -166,7 +166,7 @@ describe('Bridge', function () {
 
     koinosTxIdOp = 2
 
-    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, bridge.address)
+    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '20000000', bridge.address)
 
     // value is 8 decimals max
     tx = await bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '20000000', signatures)
@@ -178,23 +178,21 @@ describe('Bridge', function () {
 
   // eslint-disable-next-line no-undef
   it('should not withdraw ERC20 tokens', async function () {
-    await expect(bridge.connect(accounts[5]).transferTokens(accounts[10].address, '250000000000000000', koinosAddr1)).to.be.revertedWith('token is not supported')
-    await expect(bridge.connect(accounts[5]).transferTokens(mockToken.address, '25000000', koinosAddr1)).to.be.revertedWith('normalizedAmount amount must be greater than 0')
-
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee898'
     let koinosTxIdOp = 1
 
-    let signatures = await hashAndSign(koinosTxId, koinosTxIdOp, bridge.address)
+    let signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', bridge.address)
 
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, accounts[3].address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('token is not supported')
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('transfer already completed')
 
     koinosTxIdOp = 3
 
-    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, bridge.address)
+    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', bridge.address)
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', signatures.slice(0, 2))).to.be.revertedWith('quorum not met')
-    signatures[3] = '0x1234'
-    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('invalid signatures')
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '20000000', signatures)).to.be.revertedWith('invalid signatures')
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, 4, mockToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('invalid signatures')
+    await expect(bridge.connect(accounts[10]).completeTransfer('0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0eE898', 4, mockToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('invalid signatures')
   })
 
   // eslint-disable-next-line no-undef
@@ -227,28 +225,47 @@ describe('Bridge', function () {
   })
 
   // eslint-disable-next-line no-undef
-  it.skip('should deposit Wrapped tokens', async function () {
-    // mint Wrapped token
-    // let tx = await mockWrappedToken.connect(bridgeOwner).mint(accounts[5].address, '1000000000000000000')
-    // await tx.wait()
-    // expect(await mockWrappedToken.balanceOf(accounts[5].address)).to.equal('1000000000000000000')
+  it('should deposit Wrapped tokens', async function () {
+    const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
+    let koinosTxIdOp = 1
 
-    // increase allowance
-    tx = await mockWrappedToken.connect(accounts[5]).increaseAllowance(bridge.address, '1000000000000000000')
+    let signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[4].address, '10000000', bridge.address)
+
+    // value is 8 decimals max
+    let tx = await bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[4].address, '10000000', signatures)
     await tx.wait()
 
-    // lock the tokens
-    tx = await bridge.connect(accounts[5]).transferTokens(mockWrappedToken.address, '250000000000000000', koinosAddr1)
-    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(mockWrappedToken.address, koinosAddr1, '25000000')
+    expect(await mockWrappedToken.balanceOf(accounts[4].address)).to.equal('10000000')
+    expect(await mockWrappedToken.totalSupply()).to.equal('10000000')
 
-    expect(await mockWrappedToken.balanceOf(accounts[5].address)).to.equal('750000000000000000')
-    expect(await mockWrappedToken.balanceOf(bridge.address)).to.equal('250000000000000000')
+    koinosTxIdOp = 2
 
-    // only lock normalized amounts (8 decimals max) and refund dust
-    tx = await bridge.connect(accounts[5]).transferTokens(mockWrappedToken.address, '250000000000001234', koinosAddr1)
-    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(mockWrappedToken.address, koinosAddr1, '25000000')
+    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
 
-    expect(await mockWrappedToken.balanceOf(accounts[5].address)).to.equal('500000000000000000')
-    expect(await mockWrappedToken.balanceOf(bridge.address)).to.equal('500000000000000000')
+    // value is 8 decimals max
+    tx = await bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', signatures)
+    await tx.wait()
+
+    expect(await mockWrappedToken.balanceOf(accounts[7].address)).to.equal('200000000')
+    expect(await mockWrappedToken.totalSupply()).to.equal('210000000')
+  })
+
+  // eslint-disable-next-line no-undef
+  it('should not deposit Wrapped tokens', async function () {
+    const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee898'
+    let koinosTxIdOp = 3
+
+    let signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[3].address, '10000000', bridge.address)
+
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, accounts[3].address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('token is not supported')
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('transfer already completed')
+
+    koinosTxIdOp = 4
+
+    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[3].address, '10000000', bridge.address)
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[3].address, '10000000', signatures.slice(0, 2))).to.be.revertedWith('quorum not met')
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[3].address, '20000000', signatures)).to.be.revertedWith('invalid signatures')
+    await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, 4, mockWrappedToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('invalid signatures')
+    await expect(bridge.connect(accounts[10]).completeTransfer('0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0eE898', 4, mockWrappedToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('invalid signatures')
   })
 })

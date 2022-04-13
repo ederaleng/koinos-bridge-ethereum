@@ -1,4 +1,4 @@
-![Test](https://github.com/roaminroe/koinos-bridge-ethereum/actions/workflows/test.yml/badge.svg)
+[![Test](https://github.com/roaminroe/koinos-bridge-ethereum/actions/workflows/test.yml/badge.svg)](https://github.com/roaminroe/koinos-bridge-ethereum/actions/workflows/test.yml)
 # koinos-bridge-ethereum
 
 Non-custodial multi-sig bridge for the Koinos blockchain
