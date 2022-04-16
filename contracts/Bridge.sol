@@ -284,44 +284,44 @@ contract Bridge is ReentrancyGuard {
         emit SupportedWrappedTokenRemoved(token);
     }
 
-    function addValidator(bytes[] memory signatures, address newValidator)
+    function addValidator(bytes[] memory signatures, address validator)
         external
     {
-        require(!isValidator[newValidator], "Validator already exists");
+        require(!isValidator[validator], "Validator already exists");
 
         bytes32 messageHash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(newValidator, nonce, address(this)))
+            keccak256(abi.encodePacked(validator, nonce, address(this)))
         );
 
         verifySignatures(signatures, messageHash);
 
-        isValidator[newValidator] = true;
-        validators.push(newValidator);
+        isValidator[validator] = true;
+        validators.push(validator);
         nonce += 1;
 
-        emit ValidatorAdded(newValidator);
+        emit ValidatorAdded(validator);
     }
 
     function removeValidator(
         bytes[] memory signatures,
-        address validatorAddress
+        address validator
     ) external {
-        require(isValidator[validatorAddress], "Validator does not exist");
+        require(isValidator[validator], "Validator does not exist");
 
         bytes32 hash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(validatorAddress, nonce, address(this)))
+            keccak256(abi.encodePacked(validator, nonce, address(this)))
         );
 
         verifySignatures(signatures, hash);
 
-        isValidator[validatorAddress] = false;
+        isValidator[validator] = false;
         nonce += 1;
 
         for (uint256 i = 0; i < validators.length; i++) {
-            if (validators[i] == validatorAddress) removeValidatorByIndex(i);
+            if (validators[i] == validator) removeValidatorByIndex(i);
         }
 
-        emit ValidatorRemoved(validatorAddress);
+        emit ValidatorRemoved(validator);
     }
 
     function verifySignatures(bytes[] memory signatures, bytes32 hash)
