@@ -8,7 +8,10 @@
   "private": false,
   "scripts": {
     "test": "yarn hardhat test",
-    "compile": "yarn hardhat compile"
+    "compile": "yarn hardhat compile",
+    "startnode": "npx hardhat node",
+    "initTokens": "npx hardhat run --network localhost scripts/init-tokens.js",
+    "depositTokens": "npx hardhat run --network localhost scripts/deposit-tokens.js"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",

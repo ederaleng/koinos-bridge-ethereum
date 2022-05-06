@@ -24,6 +24,18 @@ contract Bridge is ReentrancyGuard {
     event SupportedTokenAdded(address indexed token);
     event SupportedTokenRemoved(address indexed token);
 
+    enum ActionId {
+        ReservedAction,
+        AddValidator,
+        RemoveValidator,
+        AddSupportedToken,
+        RemoveSupportedToken,
+        AddSupportedWrappedToken,
+        RemoveSupportedWrappedToken,
+        SetPause,
+        CompleteTransfer
+    }
+
     uint256 public nonce = 1;
 
     address[] public validators;
@@ -169,6 +181,7 @@ contract Bridge is ReentrancyGuard {
         bytes32 messageHash = getEthereumMessageHash(
             keccak256(
                 abi.encodePacked(
+                    uint(ActionId.CompleteTransfer),
                     txId,
                     operationId,
                     token,
@@ -211,7 +224,7 @@ contract Bridge is ReentrancyGuard {
         require(!isSupportedToken[token], "Token already exists");
 
         bytes32 messageHash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(token, nonce, address(this)))
+            keccak256(abi.encodePacked(uint(ActionId.AddSupportedToken), token, nonce, address(this)))
         );
 
         verifySignatures(signatures, messageHash);
@@ -230,7 +243,7 @@ contract Bridge is ReentrancyGuard {
         require(isSupportedToken[token], "Token does not exist");
 
         bytes32 messageHash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(token, nonce, address(this)))
+            keccak256(abi.encodePacked(uint(ActionId.RemoveSupportedToken), token, nonce, address(this)))
         );
 
         verifySignatures(signatures, messageHash);
@@ -250,7 +263,7 @@ contract Bridge is ReentrancyGuard {
         require(!isSupportedWrappedToken[token], "Token already exists");
 
         bytes32 messageHash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(token, nonce, address(this)))
+            keccak256(abi.encodePacked(uint(ActionId.AddSupportedWrappedToken), token, nonce, address(this)))
         );
 
         verifySignatures(signatures, messageHash);
@@ -269,7 +282,7 @@ contract Bridge is ReentrancyGuard {
         require(isSupportedWrappedToken[token], "Token does not exist");
 
         bytes32 messageHash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(token, nonce, address(this)))
+            keccak256(abi.encodePacked(uint(ActionId.RemoveSupportedWrappedToken), token, nonce, address(this)))
         );
 
         verifySignatures(signatures, messageHash);
@@ -290,7 +303,7 @@ contract Bridge is ReentrancyGuard {
         require(!isValidator[validator], "Validator already exists");
 
         bytes32 messageHash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(validator, nonce, address(this)))
+            keccak256(abi.encodePacked(uint(ActionId.AddValidator), validator, nonce, address(this)))
         );
 
         verifySignatures(signatures, messageHash);
@@ -302,14 +315,13 @@ contract Bridge is ReentrancyGuard {
         emit ValidatorAdded(validator);
     }
 
-    function removeValidator(
-        bytes[] memory signatures,
-        address validator
-    ) external {
+    function removeValidator(bytes[] memory signatures, address validator)
+        external
+    {
         require(isValidator[validator], "Validator does not exist");
 
         bytes32 hash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(validator, nonce, address(this)))
+            keccak256(abi.encodePacked(uint(ActionId.RemoveValidator), validator, nonce, address(this)))
         );
 
         verifySignatures(signatures, hash);
@@ -475,7 +487,7 @@ contract Bridge is ReentrancyGuard {
 
     function pause(bytes[] memory signatures) public whenNotPaused {
         bytes32 hash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(true, nonce, address(this)))
+            keccak256(abi.encodePacked(uint(ActionId.SetPause), true, nonce, address(this)))
         );
 
         verifySignatures(signatures, hash);
@@ -488,14 +500,14 @@ contract Bridge is ReentrancyGuard {
 
     function unpause(bytes[] memory signatures) public whenPaused {
         bytes32 hash = getEthereumMessageHash(
-            keccak256(abi.encodePacked(false, nonce, address(this)))
+            keccak256(abi.encodePacked(uint(ActionId.SetPause), false, nonce, address(this)))
         );
 
         verifySignatures(signatures, hash);
 
         paused = true;
         nonce += 1;
-        
+
         paused = false;
         emit Unpause();
     }

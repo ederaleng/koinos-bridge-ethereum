@@ -29,6 +29,18 @@ const addtlValidatorsPrivateKeys = [
 
 const koinosAddr1 = '1GE2JqXw5LMQaU1sj82Dy8ZEe2BRXQS1cs'
 
+const ActionId = {
+  ReservedAction: 0,
+  AddValidator: 1,
+  RemoveValidator: 2,
+  AddSupportedToken: 3,
+  RemoveSupportedToken: 4,
+  AddSupportedWrappedToken: 5,
+  RemoveSupportedWrappedToken: 6,
+  SetPause: 7,
+  CompleteTransfer: 8
+}
+
 const hashAndSign = async (...args) => {
   // eslint-disable-next-line no-undef
   const hash = await web3.utils.soliditySha3(...args)
@@ -103,7 +115,7 @@ describe('Bridge', function () {
     let nonce = await bridge.nonce()
 
     // add support for the mockToken
-    let signatures = await hashAndSign(mockToken.address, nonce.toString(), bridge.address)
+    let signatures = await hashAndSign(ActionId.AddSupportedToken, mockToken.address, nonce.toString(), bridge.address)
 
     let tx = await bridge.connect(accounts[10]).addSupportedToken(signatures, mockToken.address)
     await tx.wait()
@@ -111,7 +123,7 @@ describe('Bridge', function () {
     nonce = await bridge.nonce()
 
     // add support for the mockFeeToken
-    signatures = await hashAndSign(mockFeeToken.address, nonce.toString(), bridge.address)
+    signatures = await hashAndSign(ActionId.AddSupportedToken, mockFeeToken.address, nonce.toString(), bridge.address)
 
     tx = await bridge.connect(accounts[10]).addSupportedToken(signatures, mockFeeToken.address)
     await tx.wait()
@@ -125,7 +137,7 @@ describe('Bridge', function () {
     const nonce = await bridge.nonce()
 
     // add support for the mockToken
-    let signatures = await hashAndSign(mockWrappedToken.address, nonce.toString(), bridge.address)
+    let signatures = await hashAndSign(ActionId.AddSupportedWrappedToken, mockWrappedToken.address, nonce.toString(), bridge.address)
 
     // Token already exists
     await expect(bridge.connect(accounts[10]).addSupportedToken(signatures.slice(2, 2), mockToken.address)).to.be.revertedWith('Token already exists')
@@ -134,7 +146,7 @@ describe('Bridge', function () {
     await expect(bridge.connect(accounts[10]).addSupportedToken(signatures.slice(2, 2), mockWrappedToken.address)).to.be.revertedWith('quorum not met')
 
     // invalid nonce which should turn into an "invalid signatures" error
-    signatures = await hashAndSign(mockWrappedToken.address, '2', bridge.address)
+    signatures = await hashAndSign(ActionId.AddSupportedWrappedToken, mockWrappedToken.address, '2', bridge.address)
 
     await expect(bridge.connect(accounts[10]).addSupportedToken(signatures, mockWrappedToken.address)).to.be.revertedWith('invalid signatures')
   })
@@ -167,7 +179,7 @@ describe('Bridge', function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee898'
     let koinosTxIdOp = 1
 
-    let signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', bridge.address)
+    let signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', bridge.address)
 
     expect(await mockToken.balanceOf(bridge.address)).to.equal('500000000000000000')
     // value is 8 decimals max
@@ -179,7 +191,7 @@ describe('Bridge', function () {
 
     koinosTxIdOp = 2
 
-    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '20000000', bridge.address)
+    signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '20000000', bridge.address)
 
     // value is 8 decimals max
     tx = await bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '20000000', signatures)
@@ -194,14 +206,14 @@ describe('Bridge', function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee898'
     let koinosTxIdOp = 1
 
-    let signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', bridge.address)
+    let signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', bridge.address)
 
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, accounts[3].address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('token is not supported')
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('transfer already completed')
 
     koinosTxIdOp = 3
 
-    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', bridge.address)
+    signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', bridge.address)
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', signatures.slice(0, 2))).to.be.revertedWith('quorum not met')
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '20000000', signatures)).to.be.revertedWith('invalid signatures')
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, 4, mockToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('invalid signatures')
@@ -213,7 +225,7 @@ describe('Bridge', function () {
     const nonce = await bridge.nonce()
 
     // add support for the mockWrappedToken
-    const signatures = await hashAndSign(mockWrappedToken.address, nonce.toString(), bridge.address)
+    const signatures = await hashAndSign(ActionId.AddSupportedWrappedToken, mockWrappedToken.address, nonce.toString(), bridge.address)
 
     const tx = await bridge.connect(accounts[10]).addSupportedWrappedToken(signatures, mockWrappedToken.address)
     await tx.wait()
@@ -226,7 +238,7 @@ describe('Bridge', function () {
     const nonce = await bridge.nonce()
 
     // add support for the mockWrappedToken
-    let signatures = await hashAndSign(mockWrappedToken.address, nonce.toString(), bridge.address)
+    let signatures = await hashAndSign(ActionId.AddSupportedWrappedToken, mockWrappedToken.address, nonce.toString(), bridge.address)
 
     // Token already exists
     await expect(bridge.connect(accounts[10]).addSupportedWrappedToken(signatures.slice(2, 2), mockWrappedToken.address)).to.be.revertedWith('Token already exists')
@@ -235,7 +247,7 @@ describe('Bridge', function () {
     await expect(bridge.connect(accounts[10]).addSupportedWrappedToken(signatures.slice(2, 2), mockToken.address)).to.be.revertedWith('quorum not met')
 
     // invalid nonce which should turn into an "invalid signatures" error
-    signatures = await hashAndSign(mockToken.address, '2', bridge.address)
+    signatures = await hashAndSign(ActionId.AddSupportedWrappedToken, mockToken.address, '2', bridge.address)
 
     await expect(bridge.connect(accounts[10]).addSupportedWrappedToken(signatures, mockToken.address)).to.be.revertedWith('invalid signatures')
   })
@@ -245,7 +257,7 @@ describe('Bridge', function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
     let koinosTxIdOp = 1
 
-    let signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[4].address, '10000000', bridge.address)
+    let signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[4].address, '10000000', bridge.address)
 
     // value is 8 decimals max
     let tx = await bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[4].address, '10000000', signatures)
@@ -256,7 +268,7 @@ describe('Bridge', function () {
 
     koinosTxIdOp = 2
 
-    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
+    signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
 
     // value is 8 decimals max
     tx = await bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', signatures)
@@ -271,14 +283,14 @@ describe('Bridge', function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
     let koinosTxIdOp = 2
 
-    let signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
+    let signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
 
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, accounts[3].address, accounts[3].address, '200000000', signatures)).to.be.revertedWith('token is not supported')
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('transfer already completed')
 
     koinosTxIdOp = 3
 
-    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[3].address, '10000000', bridge.address)
+    signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[3].address, '10000000', bridge.address)
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[3].address, '10000000', signatures.slice(0, 2))).to.be.revertedWith('quorum not met')
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[3].address, '20000000', signatures)).to.be.revertedWith('invalid signatures')
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, 4, mockWrappedToken.address, accounts[3].address, '10000000', signatures)).to.be.revertedWith('invalid signatures')
@@ -290,7 +302,7 @@ describe('Bridge', function () {
     let nonce = await bridge.nonce()
 
     // remove support for the mockToken
-    let signatures = await hashAndSign(mockToken.address, nonce.toString(), bridge.address)
+    let signatures = await hashAndSign(ActionId.RemoveSupportedToken, mockToken.address, nonce.toString(), bridge.address)
 
     let tx = await bridge.connect(accounts[10]).removeSupportedToken(signatures, mockToken.address)
     await tx.wait()
@@ -298,7 +310,7 @@ describe('Bridge', function () {
     nonce = await bridge.nonce()
 
     // remove support for the mockFeeToken
-    signatures = await hashAndSign(mockFeeToken.address, nonce.toString(), bridge.address)
+    signatures = await hashAndSign(ActionId.RemoveSupportedToken, mockFeeToken.address, nonce.toString(), bridge.address)
 
     tx = await bridge.connect(accounts[10]).removeSupportedToken(signatures, mockFeeToken.address)
     await tx.wait()
@@ -308,10 +320,10 @@ describe('Bridge', function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
     const koinosTxIdOp = 20
 
-    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockToken.address, accounts[7].address, '200000000', bridge.address)
+    signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockToken.address, accounts[7].address, '200000000', bridge.address)
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('token is not supported')
 
-    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockFeeToken.address, accounts[7].address, '200000000', bridge.address)
+    signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockFeeToken.address, accounts[7].address, '200000000', bridge.address)
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockFeeToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('token is not supported')
   })
 
@@ -320,7 +332,7 @@ describe('Bridge', function () {
     const nonce = await bridge.nonce()
 
     // add support for the mockWrappedToken
-    let signatures = await hashAndSign(mockWrappedToken.address, nonce.toString(), bridge.address)
+    let signatures = await hashAndSign(ActionId.RemoveSupportedWrappedToken, mockWrappedToken.address, nonce.toString(), bridge.address)
 
     const tx = await bridge.connect(accounts[10]).removeSupportedWrappedToken(signatures, mockWrappedToken.address)
     await tx.wait()
@@ -330,7 +342,7 @@ describe('Bridge', function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
     const koinosTxIdOp = 20
 
-    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
+    signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
 
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('token is not supported')
   })
@@ -339,7 +351,7 @@ describe('Bridge', function () {
   it('should pause the bridge', async function () {
     const nonce = await bridge.nonce()
 
-    let signatures = await hashAndSign(true, nonce.toString(), bridge.address)
+    let signatures = await hashAndSign(ActionId.SetPause, true, nonce.toString(), bridge.address)
 
     const tx = await bridge.connect(accounts[10]).pause(signatures)
     await tx.wait()
@@ -347,7 +359,7 @@ describe('Bridge', function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
     const koinosTxIdOp = 20
 
-    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
+    signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
 
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('Bridge is paused')
     await expect(bridge.connect(accounts[5]).transferTokens(accounts[10].address, '250000000000000000', koinosAddr1)).to.be.revertedWith('Bridge is paused')
@@ -357,7 +369,7 @@ describe('Bridge', function () {
   it('should unpause the bridge', async function () {
     const nonce = await bridge.nonce()
 
-    let signatures = await hashAndSign(false, nonce.toString(), bridge.address)
+    let signatures = await hashAndSign(ActionId.SetPause, false, nonce.toString(), bridge.address)
 
     const tx = await bridge.connect(accounts[10]).unpause(signatures)
     await tx.wait()
@@ -365,7 +377,7 @@ describe('Bridge', function () {
     const koinosTxId = '0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0ee899'
     const koinosTxIdOp = 20
 
-    signatures = await hashAndSign(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
+    signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', bridge.address)
 
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockWrappedToken.address, accounts[7].address, '200000000', signatures)).to.be.revertedWith('token is not supported')
     await expect(bridge.connect(accounts[5]).transferTokens(accounts[10].address, '250000000000000000', koinosAddr1)).to.be.revertedWith('token is not supported')
@@ -378,7 +390,7 @@ describe('Bridge', function () {
     let nonce = await bridge.nonce()
 
     // add support for the mockWrappedToken
-    let signatures = await hashAndSign(addtlValidators[0], nonce.toString(), bridge.address)
+    let signatures = await hashAndSign(ActionId.AddValidator, addtlValidators[0], nonce.toString(), bridge.address)
 
     let tx = await bridge.connect(accounts[10]).addValidator(signatures, addtlValidators[0])
     await tx.wait()
@@ -388,7 +400,7 @@ describe('Bridge', function () {
     expect(await bridge.validators(newValidatorsLength - 1)).to.equal(addtlValidators[0])
 
     nonce = await bridge.nonce()
-    signatures = await hashAndSign(addtlValidators[1], nonce.toString(), bridge.address)
+    signatures = await hashAndSign(ActionId.AddValidator, addtlValidators[1], nonce.toString(), bridge.address)
 
     tx = await bridge.connect(accounts[10]).addValidator(signatures, addtlValidators[1])
     await tx.wait()
@@ -404,10 +416,10 @@ describe('Bridge', function () {
 
     let nonce = await bridge.nonce()
 
-    let signatures = await hashAndSign(addtlValidators[0], nonce.toString(), bridge.address)
+    let signatures = await hashAndSign(ActionId.RemoveValidator, addtlValidators[0], nonce.toString(), bridge.address)
 
     // eslint-disable-next-line no-undef
-    const hash = await web3.utils.soliditySha3(addtlValidators[0], nonce.toString(), bridge.address)
+    const hash = await web3.utils.soliditySha3(ActionId.RemoveValidator, addtlValidators[0], nonce.toString(), bridge.address)
 
     const signature = await sigUtil.personalSign(ethers.utils.arrayify(addtlValidatorsPrivateKeys[1]), {
       data: hash
@@ -422,7 +434,7 @@ describe('Bridge', function () {
     expect(await bridge.validators(newValidatorsLength - 1)).to.equal(addtlValidators[1])
 
     nonce = await bridge.nonce()
-    signatures = await hashAndSign('0xc73280617F4daa107F8b2e0F4E75FA5b5239Cf24', nonce.toString(), bridge.address)
+    signatures = await hashAndSign(ActionId.RemoveValidator, '0xc73280617F4daa107F8b2e0F4E75FA5b5239Cf24', nonce.toString(), bridge.address)
 
     tx = await bridge.connect(accounts[10]).removeValidator(signatures, '0xc73280617F4daa107F8b2e0F4E75FA5b5239Cf24')
     await tx.wait()
