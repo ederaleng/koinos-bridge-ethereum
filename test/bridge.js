@@ -1,5 +1,6 @@
 const { expect } = require('chai')
 const { ethers } = require('hardhat')
+const { ActionId } = require('../scripts/util')
 
 const sigUtil = require('eth-sig-util')
 
@@ -28,18 +29,6 @@ const addtlValidatorsPrivateKeys = [
 ]
 
 const koinosAddr1 = '1GE2JqXw5LMQaU1sj82Dy8ZEe2BRXQS1cs'
-
-const ActionId = {
-  ReservedAction: 0,
-  AddValidator: 1,
-  RemoveValidator: 2,
-  AddSupportedToken: 3,
-  RemoveSupportedToken: 4,
-  AddSupportedWrappedToken: 5,
-  RemoveSupportedWrappedToken: 6,
-  SetPause: 7,
-  CompleteTransfer: 8
-}
 
 const hashAndSign = async (...args) => {
   // eslint-disable-next-line no-undef

@@ -1,6 +1,7 @@
 // npx hardhat run --network localhost scripts/deploy.js
 const { ethers } = require('hardhat')
 const sigUtil = require('eth-sig-util')
+const { ActionId } = require('./util')
 
 const validators = [
   '0xc73280617F4daa107F8b2e0F4E75FA5b5239Cf24',
@@ -66,7 +67,7 @@ async function main () {
   console.log('nonce:', nonce)
 
   // add support for the mockToken
-  const signatures = await hashAndSign(mockToken.address, nonce.toString(), bridge.address)
+  const signatures = await hashAndSign(ActionId.AddSupportedToken, mockToken.address, nonce.toString(), bridge.address)
 
   tx = await bridge.connect(accounts[10]).addSupportedToken(signatures, mockToken.address)
   await tx.wait()
