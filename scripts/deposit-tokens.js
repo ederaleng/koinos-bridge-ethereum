@@ -8,7 +8,7 @@ const koinosAddr1 = '1GE2JqXw5LMQaU1sj82Dy8ZEe2BRXQS1cs'
 async function transferTokens (bridge, account) {
   const tx = await bridge.connect(account).transferTokens(MOCK_TOKEN_ADDRESS, '250000000000000', koinosAddr1)
   await tx.wait()
-  console.log('transferTokens done')
+  console.log('transferTokens done', tx.hash)
 
   setTimeout(async () => await transferTokens(bridge, account), 5000)
 }
