@@ -144,14 +144,14 @@ describe('Bridge', function () {
   it('should deposit ERC20 tokens', async function () {
     // lock the tokens
     let tx = await bridge.connect(accounts[5]).transferTokens(mockToken.address, '250000000000000000', koinosAddr1)
-    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(mockToken.address, koinosAddr1, '25000000')
+    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(accounts[5].address, mockToken.address, '25000000', koinosAddr1)
 
     expect(await mockToken.balanceOf(accounts[5].address)).to.equal('750000000000000000')
     expect(await mockToken.balanceOf(bridge.address)).to.equal('250000000000000000')
 
     // only lock normalized amounts (8 decimals max) and refund dust
     tx = await bridge.connect(accounts[5]).transferTokens(mockToken.address, '250000000000001234', koinosAddr1)
-    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(mockToken.address, koinosAddr1, '25000000')
+    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(accounts[5].address, mockToken.address, '25000000', koinosAddr1)
 
     expect(await mockToken.balanceOf(accounts[5].address)).to.equal('500000000000000000')
     expect(await mockToken.balanceOf(bridge.address)).to.equal('500000000000000000')

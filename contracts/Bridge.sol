@@ -10,9 +10,10 @@ import "./WrappedToken.sol";
 
 contract Bridge is ReentrancyGuard {
     event LogTokensLocked(
+        address from,
         address token,
-        string recipient,
-        uint256 amount
+        uint256 amount,
+        string recipient
     );
 
     event ValidatorAdded(address indexed validator);
@@ -99,7 +100,7 @@ contract Bridge is ReentrancyGuard {
         // deposit into WETH
         WETH(WETHAddress).deposit{value: amount - dust}();
 
-        emit LogTokensLocked(WETHAddress, recipient, normalizedAmount);
+        emit LogTokensLocked(msg.sender, WETHAddress, normalizedAmount, recipient);
     }
 
     function transferTokens(
@@ -162,7 +163,7 @@ contract Bridge is ReentrancyGuard {
             "normalizedAmount amount must be greater than 0"
         );
 
-        emit LogTokensLocked(token, recipient, normalizedAmount);
+        emit LogTokensLocked(msg.sender, token, normalizedAmount, recipient);
     }
 
     function completeTransfer(
