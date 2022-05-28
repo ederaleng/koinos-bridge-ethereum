@@ -10,8 +10,8 @@ import "./WrappedToken.sol";
 
 contract Bridge is ReentrancyGuard {
     event LogTokensLocked(
-        address indexed token,
-        string indexed recipient,
+        address token,
+        string recipient,
         uint256 amount
     );
 
