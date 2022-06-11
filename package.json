@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "main": "index.js",
   "repository": "https://github.com/roaminroe/koinos-bridge-ethereum.git",
-  "author": "roaminroe <roamin@tuta.io>",
   "license": "MIT",
   "private": false,
   "scripts": {

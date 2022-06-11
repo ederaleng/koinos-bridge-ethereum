@@ -48,6 +48,31 @@
     },
     {
       "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bytes",
+          "name": "txId",
+          "type": "bytes"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "operationId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "address",
+          "name": "caller",
+          "type": "address"
+        }
+      ],
+      "name": "LogTransferCompleted",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
       "inputs": [],
       "name": "Pause",
       "type": "event"

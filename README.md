@@ -5,5 +5,5 @@ Non-custodial multi-sig bridge for the Koinos blockchain
 
 Heavily inpired by the following repos:
 
-https://github.com/fbslo/validator-contracts: multi-sig mechanic
-https://github.com/certusone/wormhole: bridging methods
+- multi-sig: https://github.com/fbslo/validator-contracts: 
+- bridge: https://github.com/certusone/wormhole

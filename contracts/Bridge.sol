@@ -16,6 +16,12 @@ contract Bridge is ReentrancyGuard {
         string recipient
     );
 
+    event LogTransferCompleted(
+        bytes txId,
+        uint256 operationId,
+        address caller
+    );
+
     event ValidatorAdded(address indexed validator);
     event ValidatorRemoved(address indexed validator);
 
@@ -217,6 +223,8 @@ contract Bridge is ReentrancyGuard {
         } else {
             SafeERC20.safeTransfer(IERC20(token), recipient, transferAmount);
         }
+
+        emit LogTransferCompleted(txId, operationId, msg.sender);
     }
 
     function addSupportedToken(bytes[] memory signatures, address token)
