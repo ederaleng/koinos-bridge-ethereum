@@ -189,6 +189,11 @@
           "internalType": "address",
           "name": "token",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiration",
+          "type": "uint256"
         }
       ],
       "name": "addSupportedToken",
@@ -207,6 +212,11 @@
           "internalType": "address",
           "name": "token",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiration",
+          "type": "uint256"
         }
       ],
       "name": "addSupportedWrappedToken",
@@ -225,6 +235,11 @@
           "internalType": "address",
           "name": "validator",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiration",
+          "type": "uint256"
         }
       ],
       "name": "addValidator",
@@ -263,6 +278,11 @@
           "internalType": "bytes[]",
           "name": "signatures",
           "type": "bytes[]"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiration",
+          "type": "uint256"
         }
       ],
       "name": "completeTransfer",
@@ -404,6 +424,11 @@
           "internalType": "bytes[]",
           "name": "signatures",
           "type": "bytes[]"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiration",
+          "type": "uint256"
         }
       ],
       "name": "pause",
@@ -435,6 +460,11 @@
           "internalType": "address",
           "name": "token",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiration",
+          "type": "uint256"
         }
       ],
       "name": "removeSupportedToken",
@@ -453,6 +483,11 @@
           "internalType": "address",
           "name": "token",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiration",
+          "type": "uint256"
         }
       ],
       "name": "removeSupportedWrappedToken",
@@ -471,6 +506,11 @@
           "internalType": "address",
           "name": "validator",
           "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiration",
+          "type": "uint256"
         }
       ],
       "name": "removeValidator",
@@ -545,6 +585,11 @@
           "internalType": "bytes[]",
           "name": "signatures",
           "type": "bytes[]"
+        },
+        {
+          "internalType": "uint256",
+          "name": "expiration",
+          "type": "uint256"
         }
       ],
       "name": "unpause",
