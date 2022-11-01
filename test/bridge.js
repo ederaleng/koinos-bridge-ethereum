@@ -48,6 +48,12 @@ const hashAndSign = async (...args) => {
   return signatures
 }
 
+const getLastBlockTimestamp = async () => {
+  const blockNumBefore = await ethers.provider.getBlockNumber()
+  const blockBefore = await ethers.provider.getBlock(blockNumBefore)
+  return blockBefore.timestamp
+}
+
 // eslint-disable-next-line no-undef
 describe('Bridge', function () {
   let accounts
@@ -57,7 +63,7 @@ describe('Bridge', function () {
   let mockFeeToken
   let mockWETH
 
-  async function init() {
+  async function init () {
     accounts = await ethers.getSigners()
 
     const WETH = await ethers.getContractFactory('MockWETH')
@@ -150,14 +156,14 @@ describe('Bridge', function () {
   it('should deposit ERC20 tokens', async function () {
     // lock the tokens
     let tx = await bridge.connect(accounts[5]).transferTokens(mockToken.address, '250000000000000000', koinosAddr1)
-    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(accounts[5].address, mockToken.address, '25000000', koinosAddr1)
+    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(accounts[5].address, mockToken.address, '25000000', koinosAddr1, await getLastBlockTimestamp())
 
     expect(await mockToken.balanceOf(accounts[5].address)).to.equal('750000000000000000')
     expect(await mockToken.balanceOf(bridge.address)).to.equal('250000000000000000')
 
     // only lock normalized amounts (8 decimals max) and refund dust
     tx = await bridge.connect(accounts[5]).transferTokens(mockToken.address, '250000000000001234', koinosAddr1)
-    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(accounts[5].address, mockToken.address, '25000000', koinosAddr1)
+    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(accounts[5].address, mockToken.address, '25000000', koinosAddr1, await getLastBlockTimestamp())
 
     expect(await mockToken.balanceOf(accounts[5].address)).to.equal('500000000000000000')
     expect(await mockToken.balanceOf(bridge.address)).to.equal('500000000000000000')
@@ -215,7 +221,7 @@ describe('Bridge', function () {
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '20000000', signatures, nowPlus1Hr)).to.be.revertedWith('invalid signatures')
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, 4, mockToken.address, accounts[3].address, '10000000', signatures, nowPlus1Hr)).to.be.revertedWith('invalid signatures')
     await expect(bridge.connect(accounts[10]).completeTransfer('0x12201c79b414123fcd8c9e536be7af4e765affffb7b5584c63024d6c20e77b0eE898', 4, mockToken.address, accounts[3].address, '10000000', signatures, nowPlus1Hr)).to.be.revertedWith('invalid signatures')
-  
+
     signatures = await hashAndSign(ActionId.CompleteTransfer, koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', bridge.address, nowMinus1Hr)
     await expect(bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', signatures, nowMinus1Hr)).to.be.revertedWith('expired signatures')
   })

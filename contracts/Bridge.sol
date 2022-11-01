@@ -13,7 +13,8 @@ contract Bridge is ReentrancyGuard {
         address from,
         address token,
         uint256 amount,
-        string recipient
+        string recipient,
+        uint blocktime
     );
 
     event LogTransferCompleted(
@@ -106,7 +107,7 @@ contract Bridge is ReentrancyGuard {
         // deposit into WETH
         WETH(WETHAddress).deposit{value: amount - dust}();
 
-        emit LogTokensLocked(msg.sender, WETHAddress, normalizedAmount, recipient);
+        emit LogTokensLocked(msg.sender, WETHAddress, normalizedAmount, recipient, block.timestamp);
     }
 
     function transferTokens(
@@ -169,7 +170,7 @@ contract Bridge is ReentrancyGuard {
             "normalizedAmount amount must be greater than 0"
         );
 
-        emit LogTokensLocked(msg.sender, token, normalizedAmount, recipient);
+        emit LogTokensLocked(msg.sender, token, normalizedAmount, recipient, block.timestamp);
     }
 
     function completeTransfer(

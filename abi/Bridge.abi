@@ -41,6 +41,12 @@
           "internalType": "string",
           "name": "recipient",
           "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "blocktime",
+          "type": "uint256"
         }
       ],
       "name": "LogTokensLocked",
