@@ -14,7 +14,7 @@ contract Bridge is ReentrancyGuard {
         address token,
         uint256 amount,
         string recipient,
-        uint blocktime
+        uint256 blocktime
     );
 
     event LogTransferCompleted(

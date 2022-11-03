@@ -3,6 +3,8 @@ const { ethers } = require('hardhat')
 const sigUtil = require('eth-sig-util')
 const { ActionId } = require('./util')
 
+const nowPlus1Hr = Math.floor(new Date().getTime() / 1000) + 3600
+
 const validators = [
   '0xc73280617F4daa107F8b2e0F4E75FA5b5239Cf24',
   '0x2b0e9EB31C3F3BC06437A7dF090a2f6a4D658150',
@@ -67,9 +69,9 @@ async function main () {
   console.log('nonce:', nonce)
 
   // add support for the mockToken
-  const signatures = await hashAndSign(ActionId.AddSupportedToken, mockToken.address, nonce.toString(), bridge.address)
+  const signatures = await hashAndSign(ActionId.AddSupportedToken, mockToken.address, nonce.toString(), bridge.address, nowPlus1Hr)
 
-  tx = await bridge.connect(accounts[10]).addSupportedToken(signatures, mockToken.address)
+  tx = await bridge.connect(accounts[10]).addSupportedToken(signatures, mockToken.address, nowPlus1Hr)
   await tx.wait()
 
   console.log('addSupportedToken:', mockToken.address)
