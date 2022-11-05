@@ -10,7 +10,8 @@
     "compile": "yarn hardhat compile",
     "startnode": "npx hardhat node",
     "initTokens": "npx hardhat run --network localhost scripts/init-tokens.js",
-    "depositTokens": "npx hardhat run --network localhost scripts/deposit-tokens.js"
+    "depositTokens": "npx hardhat run --network localhost scripts/deposit-tokens.js",
+    "deploy-sepolia": "npx hardhat run --network sepolia scripts/deploy-sepolia.js"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
@@ -29,5 +30,8 @@
     "hardhat": "^2.9.3",
     "i": "^0.3.7",
     "npm": "^8.6.0"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3"
   }
 }

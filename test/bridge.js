@@ -156,14 +156,14 @@ describe('Bridge', function () {
   it('should deposit ERC20 tokens', async function () {
     // lock the tokens
     let tx = await bridge.connect(accounts[5]).transferTokens(mockToken.address, '250000000000000000', koinosAddr1)
-    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(accounts[5].address, mockToken.address, '25000000', koinosAddr1, await getLastBlockTimestamp())
+    await expect(tx).to.emit(bridge, 'TokensLockedEvent').withArgs(accounts[5].address, mockToken.address, '25000000', koinosAddr1, await getLastBlockTimestamp())
 
     expect(await mockToken.balanceOf(accounts[5].address)).to.equal('750000000000000000')
     expect(await mockToken.balanceOf(bridge.address)).to.equal('250000000000000000')
 
     // only lock normalized amounts (8 decimals max) and refund dust
     tx = await bridge.connect(accounts[5]).transferTokens(mockToken.address, '250000000000001234', koinosAddr1)
-    await expect(tx).to.emit(bridge, 'LogTokensLocked').withArgs(accounts[5].address, mockToken.address, '25000000', koinosAddr1, await getLastBlockTimestamp())
+    await expect(tx).to.emit(bridge, 'TokensLockedEvent').withArgs(accounts[5].address, mockToken.address, '25000000', koinosAddr1, await getLastBlockTimestamp())
 
     expect(await mockToken.balanceOf(accounts[5].address)).to.equal('500000000000000000')
     expect(await mockToken.balanceOf(bridge.address)).to.equal('500000000000000000')
@@ -187,7 +187,7 @@ describe('Bridge', function () {
     let tx = await bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', signatures, nowPlus1Hr)
     await tx.wait()
 
-    await expect(tx).to.emit(bridge, 'LogTransferCompleted').withArgs(koinosTxId, koinosTxIdOp, accounts[10].address)
+    await expect(tx).to.emit(bridge, 'TransferCompletedEvent').withArgs(koinosTxId, koinosTxIdOp, accounts[10].address)
     expect(await mockToken.balanceOf(accounts[3].address)).to.equal('100000000000000000')
     expect(await mockToken.balanceOf(bridge.address)).to.equal('400000000000000000')
 
@@ -198,7 +198,7 @@ describe('Bridge', function () {
     // value is 8 decimals max
     tx = await bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '20000000', signatures, nowPlus1Hr)
     await tx.wait()
-    await expect(tx).to.emit(bridge, 'LogTransferCompleted').withArgs(koinosTxId, koinosTxIdOp, accounts[10].address)
+    await expect(tx).to.emit(bridge, 'TransferCompletedEvent').withArgs(koinosTxId, koinosTxIdOp, accounts[10].address)
 
     expect(await mockToken.balanceOf(accounts[3].address)).to.equal('300000000000000000')
     expect(await mockToken.balanceOf(bridge.address)).to.equal('200000000000000000')

@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./WrappedToken.sol";
 
 contract Bridge is ReentrancyGuard {
-    event LogTokensLocked(
+    event TokensLockedEvent(
         address from,
         address token,
         uint256 amount,
@@ -17,7 +17,7 @@ contract Bridge is ReentrancyGuard {
         uint256 blocktime
     );
 
-    event LogTransferCompleted(
+    event TransferCompletedEvent(
         bytes txId,
         uint256 operationId,
         address caller
@@ -107,7 +107,7 @@ contract Bridge is ReentrancyGuard {
         // deposit into WETH
         WETH(WETHAddress).deposit{value: amount - dust}();
 
-        emit LogTokensLocked(msg.sender, WETHAddress, normalizedAmount, recipient, block.timestamp);
+        emit TokensLockedEvent(msg.sender, WETHAddress, normalizedAmount, recipient, block.timestamp);
     }
 
     function transferTokens(
@@ -170,7 +170,7 @@ contract Bridge is ReentrancyGuard {
             "normalizedAmount amount must be greater than 0"
         );
 
-        emit LogTokensLocked(msg.sender, token, normalizedAmount, recipient, block.timestamp);
+        emit TokensLockedEvent(msg.sender, token, normalizedAmount, recipient, block.timestamp);
     }
 
     function completeTransfer(
@@ -232,7 +232,7 @@ contract Bridge is ReentrancyGuard {
             SafeERC20.safeTransfer(IERC20(token), recipient, transferAmount);
         }
 
-        emit LogTransferCompleted(txId, operationId, msg.sender);
+        emit TransferCompletedEvent(txId, operationId, msg.sender);
     }
 
     function addSupportedToken(bytes[] memory signatures, address token, uint expiration)
