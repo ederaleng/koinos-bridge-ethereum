@@ -187,7 +187,7 @@ describe('Bridge', function () {
     let tx = await bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '10000000', signatures, nowPlus1Hr)
     await tx.wait()
 
-    await expect(tx).to.emit(bridge, 'TransferCompletedEvent').withArgs(koinosTxId, koinosTxIdOp, accounts[10].address)
+    await expect(tx).to.emit(bridge, 'TransferCompletedEvent').withArgs(koinosTxId, koinosTxIdOp)
     expect(await mockToken.balanceOf(accounts[3].address)).to.equal('100000000000000000')
     expect(await mockToken.balanceOf(bridge.address)).to.equal('400000000000000000')
 
@@ -198,7 +198,7 @@ describe('Bridge', function () {
     // value is 8 decimals max
     tx = await bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, mockToken.address, accounts[3].address, '20000000', signatures, nowPlus1Hr)
     await tx.wait()
-    await expect(tx).to.emit(bridge, 'TransferCompletedEvent').withArgs(koinosTxId, koinosTxIdOp, accounts[10].address)
+    await expect(tx).to.emit(bridge, 'TransferCompletedEvent').withArgs(koinosTxId, koinosTxIdOp)
 
     expect(await mockToken.balanceOf(accounts[3].address)).to.equal('300000000000000000')
     expect(await mockToken.balanceOf(bridge.address)).to.equal('200000000000000000')
