@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": false,
   "scripts": {
-    "test": "yarn hardhat test",
+    "test": "yarn hardhat test --network hardhat",
     "compile": "yarn hardhat compile",
     "startnode": "npx hardhat node",
     "initTokens": "npx hardhat run --network localhost scripts/init-tokens.js",
