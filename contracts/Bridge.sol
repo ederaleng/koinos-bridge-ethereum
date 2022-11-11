@@ -22,6 +22,11 @@ contract Bridge is ReentrancyGuard {
         uint256 operationId
     );
 
+    event RequestNewSignaturesEvent(
+        bytes txId,
+        uint256 blocktime
+    );
+
     event ValidatorAdded(address indexed validator);
     event ValidatorRemoved(address indexed validator);
 
@@ -79,6 +84,10 @@ contract Bridge is ReentrancyGuard {
 
         WETHAddress = WETHAddress_;
         isSupportedToken[WETHAddress] = true;
+    }
+
+    function RequestNewSignatures(bytes memory txId) external whenNotPaused {
+        emit RequestNewSignaturesEvent(txId, block.timestamp * 1000);
     }
 
     function wrapAndTransferETH(string memory recipient)
