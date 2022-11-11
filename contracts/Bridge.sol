@@ -206,11 +206,21 @@ contract Bridge is ReentrancyGuard {
             )
         );
 
+        // calculate transaction hash
+        bytes32 transactionHash = getEthereumMessageHash(
+            keccak256(
+                abi.encodePacked(
+                    txId,
+                    operationId
+                )
+            )
+        );
+
         require(
-            !isTransferCompleted[messageHash],
+            !isTransferCompleted[transactionHash],
             "transfer already completed"
         );
-        isTransferCompleted[messageHash] = true;
+        isTransferCompleted[transactionHash] = true;
 
         verifySignatures(signatures, messageHash);
 
