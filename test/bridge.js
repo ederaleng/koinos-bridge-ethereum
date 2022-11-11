@@ -4,8 +4,8 @@ const { ActionId } = require('../scripts/util')
 
 const sigUtil = require('eth-sig-util')
 
-const nowPlus1Hr = Math.floor(new Date().getTime() / 1000) + 3600
-const nowMinus1Hr = Math.floor(new Date().getTime() / 1000) - 3600
+const nowPlus1Hr = Math.floor(new Date().getTime()) + 3600000
+const nowMinus1Hr = Math.floor(new Date().getTime()) - 3600000
 
 const testValidators = [
   '0xc73280617F4daa107F8b2e0F4E75FA5b5239Cf24',
@@ -51,7 +51,7 @@ const hashAndSign = async (...args) => {
 const getLastBlockTimestamp = async () => {
   const blockNumBefore = await ethers.provider.getBlockNumber()
   const blockBefore = await ethers.provider.getBlock(blockNumBefore)
-  return blockBefore.timestamp
+  return blockBefore.timestamp * 1000
 }
 
 // eslint-disable-next-line no-undef

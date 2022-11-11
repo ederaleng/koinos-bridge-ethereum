@@ -3,7 +3,7 @@ const { ethers } = require('hardhat')
 const sigUtil = require('eth-sig-util')
 const { ActionId } = require('./util')
 
-const nowPlus1Hr = Math.floor(new Date().getTime() / 1000) + 3600
+const nowPlus1Hr = Math.floor(new Date().getTime()) + 3600000
 
 const validators = [
   '0xc73280617F4daa107F8b2e0F4E75FA5b5239Cf24',

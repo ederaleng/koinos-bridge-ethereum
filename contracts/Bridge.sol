@@ -106,7 +106,7 @@ contract Bridge is ReentrancyGuard {
         // deposit into WETH
         WETH(WETHAddress).deposit{value: amount - dust}();
 
-        emit TokensLockedEvent(msg.sender, WETHAddress, normalizedAmount, recipient, block.timestamp);
+        emit TokensLockedEvent(msg.sender, WETHAddress, normalizedAmount, recipient, block.timestamp * 1000);
     }
 
     function transferTokens(
@@ -169,7 +169,7 @@ contract Bridge is ReentrancyGuard {
             "normalizedAmount amount must be greater than 0"
         );
 
-        emit TokensLockedEvent(msg.sender, token, normalizedAmount, recipient, block.timestamp);
+        emit TokensLockedEvent(msg.sender, token, normalizedAmount, recipient, block.timestamp * 1000);
     }
 
     function completeTransfer(
@@ -182,7 +182,7 @@ contract Bridge is ReentrancyGuard {
         uint expiration
     ) external whenNotPaused nonReentrant {
         require(
-            expiration >= block.timestamp,
+            expiration >= block.timestamp * 1000,
             "expired signatures"
         );
 
@@ -238,7 +238,7 @@ contract Bridge is ReentrancyGuard {
         external
     {
         require(
-            expiration >= block.timestamp,
+            expiration >= block.timestamp * 1000,
             "expired signatures"
         );
 
@@ -262,7 +262,7 @@ contract Bridge is ReentrancyGuard {
         external
     {
         require(
-            expiration >= block.timestamp,
+            expiration >= block.timestamp * 1000,
             "expired signatures"
         );
 
@@ -287,7 +287,7 @@ contract Bridge is ReentrancyGuard {
         external
     {
         require(
-            expiration >= block.timestamp,
+            expiration >= block.timestamp * 1000,
             "expired signatures"
         );
     
@@ -312,7 +312,7 @@ contract Bridge is ReentrancyGuard {
         uint expiration
     ) external {
         require(
-            expiration >= block.timestamp,
+            expiration >= block.timestamp * 1000,
             "expired signatures"
         );
 
@@ -338,7 +338,7 @@ contract Bridge is ReentrancyGuard {
         external
     {
         require(
-            expiration >= block.timestamp,
+            expiration >= block.timestamp * 1000,
             "expired signatures"
         );
 
@@ -361,7 +361,7 @@ contract Bridge is ReentrancyGuard {
         external
     {
         require(
-            expiration >= block.timestamp,
+            expiration >= block.timestamp * 1000,
             "expired signatures"
         );
     
@@ -534,7 +534,7 @@ contract Bridge is ReentrancyGuard {
 
     function pause(bytes[] memory signatures, uint expiration) public whenNotPaused {
         require(
-            expiration >= block.timestamp,
+            expiration >= block.timestamp * 1000,
             "expired signatures"
         );
 
@@ -552,7 +552,7 @@ contract Bridge is ReentrancyGuard {
 
     function unpause(bytes[] memory signatures, uint expiration) public whenPaused {
         require(
-            expiration >= block.timestamp,
+            expiration >= block.timestamp * 1000,
             "expired signatures"
         );
     
