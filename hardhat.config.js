@@ -3,7 +3,18 @@ require('@nomiclabs/hardhat-web3')
 
 require('dotenv').config()
 
-const { API_URL, PRIVATE_KEY } = process.env
+const { API_URL_SEPOLIA, PRIVATE_KEY_SEPOLIA } = process.env
+
+const networks = {
+  hardhat: {}
+}
+
+if (API_URL_SEPOLIA && PRIVATE_KEY_SEPOLIA) {
+  networks.sepolia = {
+    url: API_URL_SEPOLIA,
+    accounts: [`0x${PRIVATE_KEY_SEPOLIA}`]
+  }
+}
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -24,11 +35,5 @@ task('accounts', 'Prints the list of accounts', async (taskArgs, hre) => {
 module.exports = {
   solidity: '0.8.4',
   defaultNetwork: 'hardhat',
-  networks: {
-    hardhat: {},
-    sepolia: {
-      url: API_URL,
-      accounts: [`0x${PRIVATE_KEY}`]
-    }
-  }
+  networks
 }
