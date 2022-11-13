@@ -3,16 +3,16 @@ require('@nomiclabs/hardhat-web3')
 
 require('dotenv').config()
 
-const { API_URL_SEPOLIA, PRIVATE_KEY_SEPOLIA } = process.env
+const { NETWORK_NAME, API_URL, DEPLOYER_PRIVATE_KEY } = process.env
 
 const networks = {
   hardhat: {}
 }
 
-if (API_URL_SEPOLIA && PRIVATE_KEY_SEPOLIA) {
-  networks.sepolia = {
-    url: API_URL_SEPOLIA,
-    accounts: [`0x${PRIVATE_KEY_SEPOLIA}`]
+if (NETWORK_NAME && API_URL && DEPLOYER_PRIVATE_KEY) {
+  networks[NETWORK_NAME] = {
+    url: API_URL,
+    accounts: [DEPLOYER_PRIVATE_KEY]
   }
 }
 

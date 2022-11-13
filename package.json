@@ -9,11 +9,15 @@
     "test": "yarn hardhat test --network hardhat",
     "compile": "yarn hardhat compile",
     "startnode": "npx hardhat node",
-    "initTokens": "npx hardhat run --network localhost scripts/init-tokens.js",
-    "depositTokens": "npx hardhat run --network localhost scripts/deposit-tokens.js",
-    "deploy-sepolia": "npx hardhat run --network sepolia scripts/deploy-sepolia.js",
-    "completeTransfer": "npx hardhat run --network localhost scripts/complete-transfer.js",
-    "requestNewSignatures": "npx hardhat run --network localhost scripts/request-new-signatures.js"
+    "deployHardhat": "npx hardhat run --network hardhat scripts/deploy-hardhat.js",
+    "initTokensHardhat": "npx hardhat run --network hardhat scripts/init-tokens-hardhat.js",
+    "depositTokensHardhat": "npx hardhat run --network hardhat scripts/deposit-tokens-hardhat.js",
+    "completeTransferHardhat": "npx hardhat run --network hardhat scripts/complete-transfer.js",
+    "requestNewSignaturesHardhat": "npx hardhat run --network hardhat scripts/request-new-signatures.js",
+    "deployBscTestnet": "npx hardhat run --network bsctestnet scripts/deploy.js",
+    "depositBscTestnet": "npx hardhat run --network bsctestnet scripts/deposit-tokens.js",
+    "deployWrappedTokenBscTestnet": "npx hardhat run --network bsctestnet scripts/deploy-wrapped-token.js",
+    "addSupportedWrappedTokenBscTestnet": "npx hardhat run --network bsctestnet scripts/add-supported-wrapped-token.js"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",

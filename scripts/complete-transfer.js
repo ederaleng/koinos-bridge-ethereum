@@ -4,7 +4,7 @@ const { ethers } = require('hardhat')
 const BRIDGE_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
 
 async function main () {
-  const accounts = await ethers.getSigners()
+  const [account] = await ethers.getSigners()
 
   const Bridge = await ethers.getContractFactory('Bridge')
   const bridge = Bridge.attach(BRIDGE_ADDRESS)
@@ -16,11 +16,11 @@ async function main () {
   const amount = '2500'
   const expiration = '1668211540278'
   const signatures = [
-    "0x152304b134c90b5dfddb5ecd216c819d6a2e9af4b989893d7c9e3649b8c8bd4125f682c15e1c06f6d5d384b1fe82226e0a2f6135f3d88054bd45f86ec027f8451c",
-    "0x4834932c9f8c733393ad55f041d7f022d2cf195e703264ad8f7f606c508923ae6e5617f36d56163bfd78b686ccdee53b0ec41424d9a7a256e48f3dc21c0257771b",
-    "0xa19d9b71a4a11e8fbcf47625cb1506bcd72423c656a4ff000d5d9d4feb5f1d4818f5c00709dd9dc9327303ad03bbdf79d9c1d805292b467d0c5e310484d9ee611c"
+    '0x152304b134c90b5dfddb5ecd216c819d6a2e9af4b989893d7c9e3649b8c8bd4125f682c15e1c06f6d5d384b1fe82226e0a2f6135f3d88054bd45f86ec027f8451c',
+    '0x4834932c9f8c733393ad55f041d7f022d2cf195e703264ad8f7f606c508923ae6e5617f36d56163bfd78b686ccdee53b0ec41424d9a7a256e48f3dc21c0257771b',
+    '0xa19d9b71a4a11e8fbcf47625cb1506bcd72423c656a4ff000d5d9d4feb5f1d4818f5c00709dd9dc9327303ad03bbdf79d9c1d805292b467d0c5e310484d9ee611c'
   ]
-  const tx = await bridge.connect(accounts[10]).completeTransfer(koinosTxId, koinosTxIdOp, tokenAddress, recipient, amount, signatures, expiration)
+  const tx = await bridge.connect(account).completeTransfer(koinosTxId, koinosTxIdOp, tokenAddress, recipient, amount, signatures, expiration)
   await tx.wait()
   console.log(tx)
 }

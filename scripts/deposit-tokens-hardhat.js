@@ -1,24 +1,25 @@
 // npx hardhat run --network localhost scripts/deploy.js
 const { ethers } = require('hardhat')
 
-const { BRIDGE_ADDRESS } = process.env
-const RECIPIENT = '1Bf5W4LZ2FTmzPcA6d8QeLgAYmCKdZp2nN'
+const BRIDGE_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
+const MOCK_TOKEN_ADDRESS = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
+const koinosAddr1 = '1GE2JqXw5LMQaU1sj82Dy8ZEe2BRXQS1cs'
 
 async function transferTokens (bridge, account) {
-  const tx = await bridge.connect(account).wrapAndTransferETH(RECIPIENT, {
-    value: ethers.utils.parseEther('0.00000001')
-  })
+  const tx = await bridge.connect(account).transferTokens(MOCK_TOKEN_ADDRESS, '250000000000000', koinosAddr1)
   await tx.wait()
   console.log('transferTokens done', tx.hash)
+
+  setTimeout(async () => await transferTokens(bridge, account), 5000)
 }
 
 async function main () {
-  const [deployer] = await ethers.getSigners()
+  const accounts = await ethers.getSigners()
 
   const Bridge = await ethers.getContractFactory('Bridge')
-  const bridgeContract = Bridge.attach(BRIDGE_ADDRESS)
+  const bridge = Bridge.attach(BRIDGE_ADDRESS)
 
-  transferTokens(bridgeContract, deployer)
+  transferTokens(bridge, accounts[5])
 }
 
 // We recommend this pattern to be able to use async/await everywhere
