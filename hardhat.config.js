@@ -3,16 +3,17 @@ require('@nomiclabs/hardhat-web3')
 
 require('dotenv').config()
 
-const { NETWORK_NAME, API_URL, DEPLOYER_PRIVATE_KEY } = process.env
+const { PRIVATE_KEY } = process.env
 
 const networks = {
-  hardhat: {}
-}
-
-if (NETWORK_NAME && API_URL && DEPLOYER_PRIVATE_KEY) {
-  networks[NETWORK_NAME] = {
-    url: API_URL,
-    accounts: [DEPLOYER_PRIVATE_KEY]
+  hardhat: {},
+  bsctestnet: {
+    url: 'https://data-seed-prebsc-2-s1.binance.org:8545',
+    accounts: [PRIVATE_KEY]
+  },
+  sepolia: {
+    url: 'https://rpc-sepolia.rockx.com',
+    accounts: [PRIVATE_KEY]
   }
 }
 

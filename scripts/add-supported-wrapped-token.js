@@ -4,7 +4,7 @@ const sigUtil = require('eth-sig-util')
 require('dotenv').config()
 const { ActionId } = require('./util')
 
-const WRAPPED_TOKEN_ADDR = '0x535616DdEc8d4F21cA0BF34E0843eF634B83D835'
+const WRAPPED_TOKEN_ADDR = '0x0212B244114eB539C5C8EFE0F15cA09B6C0BC269'
 
 const nowPlus1Hr = Math.floor(new Date().getTime()) + 3600000
 
