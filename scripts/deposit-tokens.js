@@ -1,7 +1,7 @@
 // npx hardhat run --network localhost scripts/deploy.js
 const { ethers } = require('hardhat')
 
-const { BRIDGE_ADDRESS } = process.env
+const { BRIDGE_ADDR } = process.env
 const RECIPIENT = '1Bf5W4LZ2FTmzPcA6d8QeLgAYmCKdZp2nN'
 
 async function transferTokens (bridge, account) {
@@ -16,7 +16,7 @@ async function main () {
   const [deployer] = await ethers.getSigners()
 
   const Bridge = await ethers.getContractFactory('Bridge')
-  const bridgeContract = Bridge.attach(BRIDGE_ADDRESS)
+  const bridgeContract = Bridge.attach(BRIDGE_ADDR)
 
   transferTokens(bridgeContract, deployer)
 }

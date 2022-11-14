@@ -1,24 +1,25 @@
 // npx hardhat run --network localhost scripts/deploy.js
 const { ethers } = require('hardhat')
+require('dotenv').config()
 
-const BRIDGE_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
+const { BRIDGE_ADDR } = process.env
 
 async function main () {
   const [account] = await ethers.getSigners()
 
   const Bridge = await ethers.getContractFactory('Bridge')
-  const bridge = Bridge.attach(BRIDGE_ADDRESS)
+  const bridge = Bridge.attach(BRIDGE_ADDR)
 
-  const koinosTxId = '0x1220796bb5a9436ef8d1ff79ac2c555b3c3de7f01309f9f24b3e0efa1d00055830f3'
-  const koinosTxIdOp = '1'
-  const tokenAddress = '0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512'
-  const recipient = '0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65'
-  const amount = '2500'
-  const expiration = '1668211540278'
+  const koinosTxId = '0x122042620de9aee17c93512c0acc98e3248cb88524998df5f95eaad65bf3ddbe9070'
+  const koinosTxIdOp = '3'
+  const tokenAddress = '0xeA756978B2D8754b0f92CAc325880aa13AF38f88'
+  const recipient = '0x3D7D98070a3B5762fF4ed30Afc58F8f0000bE3b3'
+  const amount = '1'
+  const expiration = '1668465758850'
   const signatures = [
-    '0x152304b134c90b5dfddb5ecd216c819d6a2e9af4b989893d7c9e3649b8c8bd4125f682c15e1c06f6d5d384b1fe82226e0a2f6135f3d88054bd45f86ec027f8451c',
-    '0x4834932c9f8c733393ad55f041d7f022d2cf195e703264ad8f7f606c508923ae6e5617f36d56163bfd78b686ccdee53b0ec41424d9a7a256e48f3dc21c0257771b',
-    '0xa19d9b71a4a11e8fbcf47625cb1506bcd72423c656a4ff000d5d9d4feb5f1d4818f5c00709dd9dc9327303ad03bbdf79d9c1d805292b467d0c5e310484d9ee611c'
+    '0xf41d6cdb452acb2f2dcae6d7bdf1a5ef679803f512505ccea3cc7ee313899337119c3ae79b77c77c2a44b6e8fe4ea8d6ced981d4f37c7c90cef9c0a118b641fe1c',
+    '0x0164014af2a99d7763499403a4bed631bfab42fa95725ab150cfb86e974f997238a8e30c2ffd10c768b6b82032745a0c549188d6ba3d8b731fce06af17ab404a1b',
+    '0x0d81c709a7cc7057cc4f19c6f8836b3ea1d775cfac8b622edcc6628abcce05ff07e6722bb2db337211b29f201d0829d52d2dfab1366331853d5a4c6506736bd71b'
   ]
   const tx = await bridge.connect(account).completeTransfer(koinosTxId, koinosTxIdOp, tokenAddress, recipient, amount, signatures, expiration)
   await tx.wait()

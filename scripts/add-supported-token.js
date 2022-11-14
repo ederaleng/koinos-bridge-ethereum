@@ -4,7 +4,7 @@ const sigUtil = require('eth-sig-util')
 require('dotenv').config()
 const { ActionId } = require('./util')
 
-const WRAPPED_TOKEN_ADDR = '0xeA756978B2D8754b0f92CAc325880aa13AF38f88'
+const TOKEN_ADDR = '0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6'
 
 const nowPlus1Hr = Math.floor(new Date().getTime()) + 3600000
 
@@ -35,14 +35,14 @@ async function main () {
 
   const nonce = await bridgeContract.nonce()
 
-  const signatures = await hashAndSign(ActionId.AddSupportedWrappedToken, WRAPPED_TOKEN_ADDR, nonce.toString(), bridgeContract.address, nowPlus1Hr)
+  const signatures = await hashAndSign(ActionId.AddSupportedToken, TOKEN_ADDR, nonce.toString(), bridgeContract.address, nowPlus1Hr)
 
   console.log('signatures', signatures)
 
-  const tx = await bridgeContract.connect(deployer).addSupportedWrappedToken(signatures, WRAPPED_TOKEN_ADDR, nowPlus1Hr)
+  const tx = await bridgeContract.connect(deployer).addSupportedToken(signatures, TOKEN_ADDR, nowPlus1Hr)
   await tx.wait()
 
-  console.log('Wrapped token support added')
+  console.log('token support added for', TOKEN_ADDR)
 }
 
 // We recommend this pattern to be able to use async/await everywhere

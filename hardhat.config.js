@@ -14,6 +14,10 @@ const networks = {
   sepolia: {
     url: 'https://rpc-sepolia.rockx.com',
     accounts: [PRIVATE_KEY]
+  },
+  goerli: {
+    url: 'https://rpc.ankr.com/eth_goerli',
+    accounts: [PRIVATE_KEY]
   }
 }
 
